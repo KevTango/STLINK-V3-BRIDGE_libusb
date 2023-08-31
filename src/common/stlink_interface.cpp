@@ -215,9 +215,12 @@ STLinkInterface::STLink_OpenDevice(TEnumStlinkInterface IfId,
         return SS_DEVICE_NOT_SUPPORTED;
     }
 
+    // bExclusiveAccess check will not allow the ST-Link V3 to be detected
+    /*
     if (bExclusiveAccess != 0) {
         return SS_CMD_NOT_AVAILABLE;
     }
+    */
 
     if (DevIdxInList >= cnt)
         return SS_BAD_PARAMETER;

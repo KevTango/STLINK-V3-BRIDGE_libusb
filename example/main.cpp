@@ -60,26 +60,17 @@ brg_status_print(Brg_StatusT status)
     }
 }
 
-// Write/set gpios all at once
-int
-write_gpio_all(Brg *brg, int gpios)
+// set gpio level
+void
+gpio_set_level(Brg *brg, int channel, Brg_GpioValT level)
 {
     Brg_StatusT status;
     uint8_t error_mask = 0;
     Brg_GpioValT gpio_vals[BRG_GPIO_MAX_NB];
 
-    for (size_t i = 0; i < ARRAY_SIZE(gpio_vals); ++i) {
-        gpio_vals[i] = (1 << i) & gpios ? GPIO_SET : GPIO_RESET;
-    }
+    gpio_vals[channel] = level ? GPIO_SET : GPIO_RESET;
 
     status = brg->SetResetGPIO(BRG_GPIO_ALL, gpio_vals, &error_mask);
-    if (brg_status_print(status)) {
-        return 1;
-    }
-    if (error_mask) {
-        return 1;
-    }
-    return 0;
 }
 
 void
@@ -91,7 +82,7 @@ perform_gpio_test(Brg *stlink_bridge)
         {
             .Mode = GPIO_MODE_OUTPUT,
             .Speed = GPIO_SPEED_LOW,
-            .Pull = GPIO_NO_PULL,
+            .Pull = GPIO_PULL_UP,
             .OutputType = GPIO_OUTPUT_PUSHPULL,
         },
     };
@@ -108,21 +99,16 @@ perform_gpio_test(Brg *stlink_bridge)
         return;
     }
 
-    size_t max_num = (1 << BRG_GPIO_MAX_NB) - 1;
+    // initial state
+    gpio_set_level(stlink_bridge, 0, GPIO_RESET);
+    gpio_set_level(stlink_bridge, 1, GPIO_RESET);
+    gpio_set_level(stlink_bridge, 2, GPIO_RESET);
+    gpio_set_level(stlink_bridge, 3, GPIO_RESET);
 
-    cout << "writing numbers from 0-" << max_num << " on the GPIOs... " << endl;
-
-    if (write_gpio_all(stlink_bridge, 0)) {
-        return;
-    }
-
-    for (size_t i = 0; i <= max_num; ++i) {
-        if (write_gpio_all(stlink_bridge, i)) {
-            return;
-        }
-    }
-
-    if (write_gpio_all(stlink_bridge, 0)) {
-        return;
+    while (1) {
+        gpio_set_level(stlink_bridge, 0, GPIO_SET);
+        gpio_set_level(stlink_bridge, 1, GPIO_SET);
+        gpio_set_level(stlink_bridge, 2, GPIO_SET);
+        gpio_set_level(stlink_bridge, 3, GPIO_SET);
     }
 }
